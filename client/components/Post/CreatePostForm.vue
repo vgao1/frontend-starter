@@ -1,14 +1,22 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { fetchy } from "../../utils/fetchy";
+import { BodyT, fetchy } from "../../utils/fetchy";
 
-const content = ref("");
+const photoURL = ref("");
+const zipCode = ref("");
+const address = ref("");
 const emit = defineEmits(["refreshPosts"]);
 
-const createPost = async (content: string) => {
+const createPost = async (photoURL: string, zipCode: string, address: string) => {
+  let options: BodyT;
+  if (address !== "") {
+    options = { address };
+  } else {
+    options = null;
+  }
   try {
     await fetchy("/api/posts", "POST", {
-      body: { content },
+      body: { photoURL, zipCode, options },
     });
   } catch (_) {
     return;
@@ -18,14 +26,20 @@ const createPost = async (content: string) => {
 };
 
 const emptyForm = () => {
-  content.value = "";
+  photoURL.value = "";
+  zipCode.value = "";
+  address.value = "";
 };
 </script>
 
 <template>
-  <form @submit.prevent="createPost(content)">
-    <label for="content">Post Contents:</label>
-    <textarea id="content" v-model="content" placeholder="Create a post!" required> </textarea>
+  <form @submit.prevent="createPost(photoURL, zipCode, address)">
+    <label for="photoURL">Photo URL:</label>
+    <textarea id="photoURL" v-model="photoURL" placeholder="URL to a photo https:// ..." required> </textarea>
+    <label for="zipCode">Zip Code:</label>
+    <textarea id="zipCode" v-model="zipCode" placeholder="<digit><digit><digit><digit><digit>" required> </textarea>
+    <label for="address">Address:</label>
+    <textarea id="address" v-model="address" placeholder="... Ave/Blvd/Ln/Dr/Rd/St"> </textarea>
     <button type="submit" class="pure-button-primary pure-button">Create Post</button>
   </form>
 </template>
