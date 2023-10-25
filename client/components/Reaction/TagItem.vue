@@ -48,9 +48,9 @@ onBeforeMount(async () => {
           </svg>
         </button>
       </div>
-      <button type="button" class="tag-btn">
-        <a :href="similarPostURL">#{{ props.tag.content }}</a>
-      </button>
+      <a :href="similarPostURL">
+        <button type="button" class="tag-btn">#{{ props.tag.content }}</button>
+      </a>
       <div v-if="props.tag.reacter !== currentUsername">
         <button v-if="displayStyleClass === 'hideForm' && !alreadyReported" type="button" class="report-btn" @click="updateReportStyle">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="white" class="bi bi-flag-fill" viewBox="0 0 16 16">

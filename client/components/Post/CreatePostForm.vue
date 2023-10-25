@@ -16,18 +16,18 @@ const createPost = async (photoURL: string, zipCode: string, address: string) =>
     const center = await getCenter(address, zipCode);
     if (center.length === 2) {
       options = { address, latitude: center[1], longitude: center[0] };
-      try {
-        await fetchy("/api/posts", "POST", {
-          body: { photoURL, zipCode, options },
-        });
-      } catch (_) {
-        return;
-      }
     } else {
       throw new TypeError("Invalid Address not added to post!");
     }
   } else {
     options = null;
+  }
+  try {
+    await fetchy("/api/posts", "POST", {
+      body: { photoURL, zipCode, options },
+    });
+  } catch {
+    return;
   }
   emit("refreshPosts");
   emptyForm();

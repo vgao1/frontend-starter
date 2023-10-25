@@ -21,7 +21,7 @@ const router = createRouter({
       component: HomeView,
     },
     {
-      path: "/map/:zipCode?",
+      path: "/map",
       name: "Map",
       component: MapView,
       meta: { requiresAuth: true },

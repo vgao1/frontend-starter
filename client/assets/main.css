@@ -53,3 +53,26 @@ a, p {
   background-color: #886750;
   color: white;
 }
+
+.popup-img {
+  max-height: 100px;
+  width: auto;
+  padding-right: 0.5em;
+}
+
+.popup-link {
+  color: blue;
+  text-decoration: none;
+  display: flex;
+  justify-content: center;
+}
+
+.base {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.popup-linebreak {
+  visibility: hidden;
+}

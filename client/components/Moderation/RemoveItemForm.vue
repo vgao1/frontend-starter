@@ -31,7 +31,7 @@ const submitReview = async (decision: string) => {
         <option value="no">Don't Remove</option>
       </select>
     </div>
-    <button type="submit" class="pure-button">Submit</button>
+    <button type="submit" class="pure-button brown-btn">Submit</button>
   </form>
 </template>
 <style scoped>
@@ -50,5 +50,10 @@ form {
 
 select {
   margin-left: 0.5em;
+}
+
+.brown-btn {
+  background-color: #886750;
+  color: white;
 }
 </style>

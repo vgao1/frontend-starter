@@ -8,7 +8,7 @@ const { isLoggedIn } = storeToRefs(useUserStore());
 <template>
   <main>
     <section>
-      <MapComponent v-if="isLoggedIn" :zipCode="$route.params.zipCode" />
+      <MapComponent v-if="isLoggedIn" />
       <h1 v-else>Please login!</h1>
     </section>
   </main>

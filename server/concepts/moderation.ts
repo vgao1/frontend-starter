@@ -148,10 +148,8 @@ export default class ModerationConcept {
 
   async addToVoted(moderator: ObjectId, item: ObjectId, itemType: string) {
     const reportedItem = await this.findReport(item.toString(), itemType);
-    console.log(reportedItem);
     const existingVoters = reportedItem.voted ? reportedItem.voted : Array<string>();
     existingVoters.push(moderator.toString());
-    console.log(await this.reportedItems.readOne(reportedItem));
     await this.reportedItems.updateOne(
       {
         item,
@@ -187,7 +185,7 @@ export class ReportNotFoundError extends NotFoundError {
 
 export class AlreadyReportedError extends NotAllowedError {
   constructor(public readonly itemType: string) {
-    super("Not submitted for this {0}, you've already submitted one!", itemType);
+    super("Not submitted for this {0}, you've already submitted a report!", itemType);
   }
 }
 

@@ -62,7 +62,7 @@ async function refreshComment() {
         <a :href="userURL(props.comment.reacter)">{{ props.comment.reacter }}</a>
       </b>
       :
-      <hr v-if="displayStyleClass === 'showForm'" class="new-line" />
+      <hr v-if="displayStyleClass === 'showForm'" />
       {{ props.comment.content }}
       <button v-if="displayStyleClass === 'hideForm' && !alreadyReported" type="button" class="report-btn" @click="updateReportStyle">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="white" class="bi bi-flag-fill" viewBox="0 0 16 16">

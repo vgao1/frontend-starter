@@ -80,44 +80,26 @@ class Routes {
     return Responses.post(postObj);
   }
 
+  @Router.get("/posts/searchByZip/:zipCode")
+  async getPostsByZip(zipCode: string) {
+    const posts = await Post.getPosts({ zipCode });
+    return Responses.posts(posts);
+  }
+
   @Router.post("/posts")
   async createPost(session: WebSessionDoc, photoURL: string, zipCode: string, options?: PostOptions) {
     const user = WebSession.getUser(session);
-    ZipCodeMap.isValidZipCode(zipCode);
+    await ZipCodeMap.isValidZipCode(zipCode);
     const created = await Post.create(user, photoURL, zipCode, options);
-    let creationMsg = created.msg;
-    let mapObj;
-    if (options?.address) {
-      const mapCreated = await ZipCodeMap.addAddress(user, zipCode, options.address, "destination");
-      creationMsg += "\n Successfully added destination " + options.address + "!";
-      mapObj = mapCreated.map;
-    } else {
-      mapObj = { msg: "No update to map for zip code " + zipCode };
-    }
-    return { msg: creationMsg, post: await Responses.post(created.post), map: mapObj };
+    const creationMsg = created.msg;
+    return { msg: creationMsg, post: await Responses.post(created.post) };
   }
 
   @Router.patch("/posts/:_id")
   async updatePost(session: WebSessionDoc, _id: ObjectId, update: Partial<PostDoc>) {
     const user = WebSession.getUser(session);
     await Post.isAuthor(user, _id);
-    const postObj = await Post.getPost(_id);
     let msgValue = "";
-    if (postObj) {
-      const zipCodeChanged = update.zipCode && update.zipCode !== postObj.zipCode;
-      if (postObj.options?.address) {
-        if (zipCodeChanged) {
-          await Post.update(_id, { options: undefined });
-        }
-        await ZipCodeMap.removeAddress(user, postObj.zipCode, postObj.options.address, "destination");
-        msgValue += "Successfully removed destination " + postObj.options.address + "!\n";
-      }
-      if (update.options?.address) {
-        const zipCode = update.zipCode ? update.zipCode : postObj.zipCode;
-        await ZipCodeMap.addAddress(user, zipCode, update.options.address, "destination");
-        msgValue += "Successfully added destination " + update.options.address + "!";
-      }
-    }
     const postUpdate = await Post.update(_id, update);
     msgValue = postUpdate.msg + "\n" + msgValue;
     return { msg: msgValue };
@@ -130,10 +112,6 @@ class Routes {
     const postObj = await Post.getPost(_id);
     let msgValue = "";
     if (postObj) {
-      if (postObj.options?.address) {
-        await ZipCodeMap.removeAddress(user, postObj.zipCode, postObj.options.address, "destination");
-        msgValue += "Successfully removed destination " + postObj.options.address + "!";
-      }
       await Moderation.deleteAllReportsByPost(postObj._id);
       await Reaction.deleteAllReactions(postObj._id);
       await Favorite.unfavoriteAll(postObj._id);
@@ -227,34 +205,6 @@ class Routes {
     return Responses.reactions(reaction);
   }
 
-  @Router.post("/map/addAddress")
-  async addAddress(session: WebSessionDoc, zipCode: string, address: string, addressType: string) {
-    const user = WebSession.getUser(session);
-    ZipCodeMap.checkAddressType(addressType);
-    return await ZipCodeMap.addAddress(user, zipCode, address, addressType);
-  }
-
-  @Router.delete("/map/removeAddress/:id")
-  async removeAddress(session: WebSessionDoc, zipCode: string, address: string, addressType: string) {
-    const user = WebSession.getUser(session);
-    ZipCodeMap.checkAddressType(addressType);
-    return await ZipCodeMap.removeAddress(user, zipCode, address, addressType);
-  }
-
-  @Router.get("/map/nearbyPlaces")
-  async getNearbyPlaces(session: WebSessionDoc, zipCode: string, addressType: string) {
-    WebSession.getUser(session);
-    ZipCodeMap.checkAddressType(addressType);
-    return await ZipCodeMap.getNearbyAddresses(zipCode, addressType);
-  }
-
-  @Router.get("/map/directions")
-  async findRoute(session: WebSessionDoc, zipCode: string, startingAddress: string, destinationAddress: string, transportationMode: string) {
-    // Generate URL to Google Maps showing route from startingAddress to destinationAddress using transportationMode
-    WebSession.getUser(session);
-    return await ZipCodeMap.findRoute(startingAddress, destinationAddress, transportationMode);
-  }
-
   @Router.post("/report")
   async uploadReport(session: WebSessionDoc, post: string, item: string, itemType: string, reason: string) {
     // called when user submits a report to report item for being inappropriate. post is the post item is under
@@ -281,10 +231,6 @@ class Routes {
       if (itemType === "post") {
         let msgValue = "";
         const postObj = await Post.getPost(item_id);
-        if (postObj.options?.address) {
-          await ZipCodeMap.removeAddress(user, postObj.zipCode, postObj.options.address, "destination");
-          msgValue += "Successfully removed destination " + postObj.options.address + "!";
-        }
         await Moderation.deleteAllReportsByPost(postObj._id);
         await Reaction.deleteAllReactions(postObj._id);
         await Favorite.unfavoriteAll(postObj._id);

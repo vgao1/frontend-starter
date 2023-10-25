@@ -1,30 +1,27 @@
 <script setup lang="ts">
-import axios from "axios";
 import { onBeforeMount, ref } from "vue";
 import MapImageComponent from "./MapImageComponent.vue";
+import { fetchy } from "../../utils/fetchy";
 
-const props = defineProps(["zipCode"]);
-let centerData = ref(Array<number>());
-let loading = ref(true);
 let loaded = ref(false);
-
-async function getCenter() {
+let postsWithDestinations = ref<Array<Record<string, string>>>([]);
+async function getDestinations() {
+  let postObjs = [];
   try {
-    const response = await axios.get(
-      `https://api.mapbox.com/geocoding/v5/mapbox.places/${props.zipCode},United States.json?limit=1&access_token=pk.eyJ1IjoidmdhbyIsImEiOiJjbG8yM2VxYTcxZ3B2MmtwZG51OWphdHVvIn0.FyQStQzF5XW9Ii-w6qiIgA`,
-    );
-    loading.value = false;
-    centerData.value = response.data.features[0].center;
-    return centerData.value;
-  } catch (err) {
-    loading.value = false;
-    centerData.value = [];
-    return [];
+    const posts = await fetchy(`/api/posts`, "GET");
+    for (const post of posts) {
+      if (post.options !== null) {
+        postObjs.push(post);
+      }
+    }
+  } catch {
+    return;
   }
+  postsWithDestinations.value = postObjs;
 }
 
 onBeforeMount(async () => {
-  await getCenter();
+  await getDestinations();
   loaded.value = true;
 });
 </script>
@@ -34,7 +31,7 @@ onBeforeMount(async () => {
     <h2>Map</h2>
   </div>
   <div v-if="loaded" ref="mapContainer" class="map-container row">
-    <MapImageComponent />
+    <MapImageComponent :postsWithDestinations="postsWithDestinations" />
   </div>
 </template>
 <style scoped>

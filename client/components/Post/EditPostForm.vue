@@ -1,18 +1,40 @@
 <script setup lang="ts">
+import axios from "axios";
 import { ref } from "vue";
 import { BodyT, fetchy } from "../../utils/fetchy";
-import { formatDate } from "../../utils/formatDate";
 
 const props = defineProps(["post"]);
 const photoURL = ref(props.post.photoURL);
 const zipCode = ref(props.post.zipCode);
 const address = ref(props.post.options != null ? props.post.options.address : "");
+let centerData = ref(Array<number>());
+let loading = ref(true);
 const emit = defineEmits(["editPost", "refreshPosts"]);
+
+async function getCenter(address: string, zipCode: string) {
+  try {
+    const response = await axios.get(
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/${address},${zipCode},United States.json?limit=1&access_token=pk.eyJ1IjoidmdhbyIsImEiOiJjbG8yM2VxYTcxZ3B2MmtwZG51OWphdHVvIn0.FyQStQzF5XW9Ii-w6qiIgA`,
+    );
+    loading.value = false;
+    centerData.value = response.data.features[0].center;
+    return centerData.value;
+  } catch (err) {
+    loading.value = false;
+    centerData.value = [];
+    return [];
+  }
+}
 
 const editPost = async (photoURL: string, zipCode: string, address: string) => {
   let options: BodyT;
-  if (address.length > 0) {
-    options = { address };
+  if (address !== "") {
+    const center = await getCenter(address, zipCode);
+    if (center.length === 2) {
+      options = { address, latitude: center[1], longitude: center[0] };
+    } else {
+      throw new TypeError("Invalid Address not added to post!");
+    }
   } else {
     options = null;
   }
@@ -37,11 +59,9 @@ const editPost = async (photoURL: string, zipCode: string, address: string) => {
     <textarea id="address" v-model="address" placeholder="... Ave/Blvd/Ln/Dr/Rd/St"> </textarea>
     <div class="base">
       <menu>
-        <li><button class="btn-small pure-button" type="submit">Save</button></li>
+        <li><button class="btn-small pure-button brown-btn" type="submit">Save</button></li>
         <li><button class="btn-small pure-button" @click="emit('editPost')">Cancel</button></li>
       </menu>
-      <p v-if="props.post.dateCreated !== props.post.dateUpdated" class="timestamp">Edited on: {{ formatDate(props.post.dateUpdated) }}</p>
-      <p v-else class="timestamp">Created on: {{ formatDate(props.post.dateCreated) }}</p>
     </div>
   </form>
 </template>
@@ -82,8 +102,9 @@ menu {
 
 .base {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 .timestamp {
@@ -91,5 +112,10 @@ menu {
   justify-content: flex-end;
   font-size: 0.9em;
   font-style: italic;
+}
+
+.brown-btn {
+  background-color: #886750;
+  color: white;
 }
 </style>

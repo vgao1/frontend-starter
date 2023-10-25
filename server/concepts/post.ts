@@ -49,6 +49,10 @@ export default class PostConcept {
 
   async update(_id: ObjectId, update: Partial<PostDoc>) {
     this.sanitizeUpdate(update);
+    const originalPost = await this.posts.readOne({ _id });
+    if (originalPost && originalPost.options !== null && update.options === null) {
+      update.options = undefined;
+    }
     await this.posts.updateOne({ _id }, update);
     return { msg: "Post successfully updated!" };
   }

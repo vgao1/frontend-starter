@@ -7,6 +7,7 @@ import mapboxgl from "mapbox-gl";
 
 export default {
   name: "BaseMap",
+  props: ["postsWithDestinations"],
   data() {
     return {
       accessToken: "pk.eyJ1IjoidmdhbyIsImEiOiJjbG8yM2VxYTcxZ3B2MmtwZG51OWphdHVvIn0.FyQStQzF5XW9Ii-w6qiIgA",
@@ -33,17 +34,24 @@ export default {
         zoom: 12,
       }).addControl(this.geocoder);
 
-      const popup = new mapboxgl.Popup().setHTML(`<h3>The Metropolitan Museum of Art</h3><p>Art from around the world</p>`);
-      this.geocoder.on("result", () => {
-        const marker = new mapboxgl.Marker({
-          draggable: false,
-          color: "#D80739",
-        })
-          .setLngLat([-73.96354299999999, 40.7793195])
-          .setPopup(popup)
-          .addTo(currentMap);
-        this.map = currentMap;
-      });
+      for (const post of this.postsWithDestinations) {
+        const googleMapURL = "https://maps.google.com/?q=" + post.options.latitude + "," + post.options.longitude;
+        const popupImage = `<img class="popup-img" src=${post.photoURL} />`;
+        const artistLink = `<a class="popup-link" href='/searchArtist/${post.author}'>${post.author}</a>`;
+        const newLine = `<hr class="popup-linebreak" />`;
+        const visitButton = `<a href=${googleMapURL}><button class="pure-button brown-btn">Visit</button></a>`;
+        const popup = new mapboxgl.Popup().setHTML(`<div class="base">${popupImage}<div class="location-details">${artistLink}${newLine}${visitButton}</div></div>`);
+        this.geocoder.on("result", () => {
+          new mapboxgl.Marker({
+            draggable: false,
+            color: "#D80739",
+          })
+            .setLngLat([post.options.longitude, post.options.latitude])
+            .setPopup(popup)
+            .addTo(currentMap);
+          this.map = currentMap;
+        });
+      }
     },
   },
 };
