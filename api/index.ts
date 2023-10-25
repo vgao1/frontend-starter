@@ -4,7 +4,6 @@ import express from "express";
 import session from "express-session";
 import logger from "morgan";
 import * as path from "path";
-
 // The following line sets up the environment variables before everything else.
 dotenv.config();
 

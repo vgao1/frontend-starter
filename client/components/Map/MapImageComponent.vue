@@ -9,9 +9,9 @@ export default {
   name: "BaseMap",
   data() {
     return {
-      accessToken: import.meta.env.VITE_MAPBOX_TOKEN,
+      accessToken: "pk.eyJ1IjoidmdhbyIsImEiOiJjbG8yM2VxYTcxZ3B2MmtwZG51OWphdHVvIn0.FyQStQzF5XW9Ii-w6qiIgA",
       geocoder: new MapboxGeocoder({
-        accessToken: import.meta.env.VITE_MAPBOX_TOKEN,
+        accessToken: "pk.eyJ1IjoidmdhbyIsImEiOiJjbG8yM2VxYTcxZ3B2MmtwZG51OWphdHVvIn0.FyQStQzF5XW9Ii-w6qiIgA",
         mapboxgl: mapboxgl,
         marker: false,
       }),
@@ -25,7 +25,7 @@ export default {
 
   methods: {
     async createMap() {
-      mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
+      mapboxgl.accessToken = "pk.eyJ1IjoidmdhbyIsImEiOiJjbG8yM2VxYTcxZ3B2MmtwZG51OWphdHVvIn0.FyQStQzF5XW9Ii-w6qiIgA";
       const currentMap = new mapboxgl.Map({
         container: "map",
         style: "mapbox://styles/mapbox/streets-v12",
