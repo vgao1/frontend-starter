@@ -38,6 +38,16 @@ export default class UserConcept {
     return this.sanitizeUser(user);
   }
 
+  async getUsername(user_id: string) {
+    const _id = new ObjectId(user_id);
+    const user = await this.users.readOne({ _id });
+    if (user) {
+      return user.username;
+    } else {
+      throw new NotFoundError("User not found!");
+    }
+  }
+
   async idsToUsernames(ids: ObjectId[]) {
     const users = await this.users.readMany({ _id: { $in: ids } });
 

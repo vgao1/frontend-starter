@@ -1,21 +1,18 @@
 <script setup lang="ts">
-import FavoriteListComponent from "../components/Favorite/FavoriteListComponent.vue";
 import { useUserStore } from "@/stores/user";
 import { storeToRefs } from "pinia";
+import MapComponent from "@/components/Map/MapComponent.vue";
 
-const { currentUsername, isLoggedIn } = storeToRefs(useUserStore());
+const { isLoggedIn } = storeToRefs(useUserStore());
 </script>
-
 <template>
   <main>
     <section>
-      <h1 v-if="isLoggedIn">{{ currentUsername }}'s Favorites</h1>
+      <MapComponent v-if="isLoggedIn" :zipCode="$route.params.zipCode" />
       <h1 v-else>Please login!</h1>
     </section>
-    <FavoriteListComponent />
   </main>
 </template>
-
 <style scoped>
 h1 {
   text-align: center;

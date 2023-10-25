@@ -3,9 +3,7 @@ import { ObjectId } from "mongodb";
 import { Router, getExpressRouter } from "./framework/router";
 
 import { Favorite, Moderation, Post, Reaction, User, WebSession, ZipCodeMap } from "./app";
-import { NotAllowedError, NotFoundError } from "./concepts/errors";
 import { PostDoc, PostOptions } from "./concepts/post";
-import { CantDeleteReactionError, ReactionNotFoundError } from "./concepts/reaction";
 import { UserDoc } from "./concepts/user";
 import { WebSessionDoc } from "./concepts/websession";
 import Responses from "./responses";
@@ -25,6 +23,11 @@ class Routes {
   @Router.get("/users/:username")
   async getUser(username: string) {
     return await User.getUserByUsername(username);
+  }
+
+  @Router.get("/users/getUsername/:id")
+  async getUsername(id: string) {
+    return await User.getUsername(id);
   }
 
   @Router.post("/users")
@@ -71,6 +74,12 @@ class Routes {
     return Responses.posts(posts);
   }
 
+  @Router.get("/posts/:_id")
+  async getPostById(_id: ObjectId) {
+    const postObj = await Post.getPost(_id);
+    return Responses.post(postObj);
+  }
+
   @Router.post("/posts")
   async createPost(session: WebSessionDoc, photoURL: string, zipCode: string, options?: PostOptions) {
     const user = WebSession.getUser(session);
@@ -101,7 +110,7 @@ class Routes {
           await Post.update(_id, { options: undefined });
         }
         await ZipCodeMap.removeAddress(user, postObj.zipCode, postObj.options.address, "destination");
-        msgValue += "Successfully removed destination " + postObj.options.address + "!<br>";
+        msgValue += "Successfully removed destination " + postObj.options.address + "!\n";
       }
       if (update.options?.address) {
         const zipCode = update.zipCode ? update.zipCode : postObj.zipCode;
@@ -110,7 +119,7 @@ class Routes {
       }
     }
     const postUpdate = await Post.update(_id, update);
-    msgValue = postUpdate.msg + "<br>" + msgValue;
+    msgValue = postUpdate.msg + "\n" + msgValue;
     return { msg: msgValue };
   }
 
@@ -130,7 +139,7 @@ class Routes {
       await Favorite.unfavoriteAll(postObj._id);
     }
     const postDeletion = await Post.delete(_id);
-    msgValue = postDeletion.msg + "<br>" + msgValue;
+    msgValue = postDeletion.msg + "\n" + msgValue;
     return { msg: msgValue };
   }
 
@@ -139,19 +148,9 @@ class Routes {
     const user = WebSession.getUser(session);
     const _id = new ObjectId(item);
     if (itemType === "post") {
-      const postObjs = await Post.getPosts({ _id });
-      if (postObjs.length == 0) {
-        throw new NotFoundError("Post with ID " + item + " not found!");
-      }
+      await Post.getPosts({ _id });
     } else if (itemType === "user") {
-      const userObj = await User.getUserById(_id);
-      if (!userObj) {
-        throw new NotFoundError("User not found!");
-      } else if (userObj._id.toString() === user.toString()) {
-        throw new NotAllowedError("Can't favorite yourself!");
-      }
-    } else {
-      throw new NotAllowedError("itemType's value should be 'post' or 'user'");
+      await User.getUserById(_id);
     }
     return await Favorite.favorite(user, _id, itemType);
   }
@@ -167,7 +166,9 @@ class Routes {
   async getFavorites(session: WebSessionDoc) {
     const user = WebSession.getUser(session);
     const favorites = await Favorite.getByLiker(user);
-    return Responses.favorites(favorites);
+    if (favorites) {
+      return Responses.favorites(favorites);
+    }
   }
 
   @Router.get("/favorites/findFavoritePost")
@@ -187,32 +188,14 @@ class Routes {
   async postReaction(session: WebSessionDoc, post: string, content: string, reactionType: string) {
     const user = WebSession.getUser(session);
     const postId = new ObjectId(post);
-    if (content == null) {
-      throw new NotAllowedError("Reaction must be at least 1 character long!");
-    }
-    if (reactionType !== "comment" && reactionType !== "tag") {
-      throw new NotAllowedError("reactionType's value should be 'comment' or 'tag'");
-    } else if (reactionType === "tag") {
-      const existingReaction = await Reaction.getReactions({ post: new ObjectId(post), content, reactionType: "tag" });
-      if (existingReaction.length > 0) {
-        throw new NotAllowedError("Tag " + content + " already exists for post " + post + "! Please upvote tag instead.");
-      }
-    }
     return await Reaction.postReaction(content, postId, user, reactionType);
   }
 
   @Router.delete("/reactions/:_id")
-  async deleteReaction(session: WebSessionDoc, reaction: string) {
+  async deleteReaction(session: WebSessionDoc, _id: ObjectId) {
     const user = WebSession.getUser(session);
-    await Reaction.isReacter(user, reaction);
-    const existingReaction = await Reaction.getReactions({ _id: new ObjectId(reaction) });
-    if (existingReaction.length == 0) {
-      throw new ReactionNotFoundError();
-    } else if (existingReaction[0].reactionType !== "comment") {
-      throw new CantDeleteReactionError();
-    }
-    await Moderation.deleteAllReportsByReaction(reaction);
-    return await Reaction.deleteReaction(reaction);
+    await Reaction.isReacter(user, _id);
+    return await Reaction.deleteReaction(_id);
   }
 
   @Router.post("/reactions/upvote")
@@ -236,6 +219,12 @@ class Routes {
       reactions = await Reaction.getReactions({});
     }
     return Responses.reactions(reactions);
+  }
+
+  @Router.get("/reactions/reaction/:_id")
+  async getReaction(_id: ObjectId) {
+    const reaction = await Reaction.getReactions({ _id });
+    return Responses.reactions(reaction);
   }
 
   @Router.post("/map/addAddress")
@@ -272,55 +261,85 @@ class Routes {
     // if item is a comment/tag or the post that is reported is item is a post
     const user = WebSession.getUser(session);
     if (itemType === "post") {
-      const existingPost = await Post.getPosts({ _id: new ObjectId(item) });
-      if (existingPost.length == 0) {
-        throw new NotFoundError("Post " + item + " not found!");
-      }
+      await Post.getPosts({ _id: new ObjectId(item) });
     } else if (itemType === "reaction") {
-      const existingReaction = await Reaction.getReactions({ _id: new ObjectId(item) });
-      if (existingReaction.length == 0) {
-        throw new ReactionNotFoundError();
-      }
-    } else {
-      throw new NotAllowedError("itemType should be 'post' or 'reaction'");
+      await Reaction.getReactions({ _id: new ObjectId(item) });
     }
     const report = await Moderation.report(user.toString(), post, item, itemType, reason);
     return { msg: report.msg, report: await Responses.report(report.report) };
   }
 
-  @Router.post("/voteToRemove")
-  async voteRemove(session: WebSessionDoc, item: string, itemType: string) {
+  @Router.post("/submitRemovalVote")
+  async voteRemove(session: WebSessionDoc, item: string, itemType: string, decision: string) {
     // called when a moderator votes to remove an item that was reported to be inappropriate. post
     // is the post item is under if item is a comment/tag or the post that is reported if item is a post.
     const user = WebSession.getUser(session);
-    if (itemType !== "post" && itemType !== "reaction") {
-      throw new NotAllowedError("itemType should be 'post' or 'reaction'");
+    const removeItemData = await Moderation.submitVote(user, item, itemType, decision);
+    const minVotesToRemove: number = Math.ceil(removeItemData.numModerators / 2);
+    if (removeItemData.numVotesToRemove >= minVotesToRemove) {
+      const item_id = new ObjectId(item);
+      if (itemType === "post") {
+        let msgValue = "";
+        const postObj = await Post.getPost(item_id);
+        if (postObj.options?.address) {
+          await ZipCodeMap.removeAddress(user, postObj.zipCode, postObj.options.address, "destination");
+          msgValue += "Successfully removed destination " + postObj.options.address + "!";
+        }
+        await Moderation.deleteAllReportsByPost(postObj._id);
+        await Reaction.deleteAllReactions(postObj._id);
+        await Favorite.unfavoriteAll(postObj._id);
+        const postDeletion = await Post.delete(item_id);
+        msgValue = postDeletion.msg + " " + msgValue;
+        return { msg: msgValue };
+      } else {
+        await Moderation.deleteReportByReaction(item_id);
+        return await Reaction.deleteReaction(item_id);
+      }
     }
-    return await Moderation.voteToRemove(user, item, itemType);
+    return removeItemData;
   }
 
   @Router.post("/addModerator")
-  async addModerator(session: WebSessionDoc, userToAdd: string) {
-    const user = WebSession.getUser(session);
-    return Moderation.addModerator(user, userToAdd);
+  async addModerator(userToAdd: string) {
+    return Moderation.addModerator(userToAdd);
   }
 
   @Router.post("/removeModerator/:id")
-  async removeModerator(session: WebSessionDoc, userToRemove: string) {
-    const user = WebSession.getUser(session);
-    return Moderation.removeModerator(user, userToRemove);
+  async removeModerator(id: string) {
+    return Moderation.removeModerator(id);
   }
 
-  @Router.get("/posts/getRecommendations")
+  @Router.get("/findModerator/:_id")
+  async findModerator(_id: string) {
+    return Moderation.findModerator(_id);
+  }
+
+  @Router.get("/reportedItems")
+  async findReportedItems() {
+    return Moderation.findReportedItems();
+  }
+
+  @Router.get("/getRecommendations")
   async getRecommendations(session: WebSessionDoc) {
     const liker = WebSession.getUser(session);
-    const favorites = await Favorite.getFavorites({ liker, itemType: "post" });
+    const favoritePosts = await Favorite.getFavorites({ liker, itemType: "post" });
+    const favoriteUsers = await Favorite.getFavorites({ liker, itemType: "user" });
     let similarPosts: Array<string> = [];
-    for (const favorite of favorites) {
-      const reactions = (await Reaction.getByPost(favorite.likedItem)).slice(0, 5);
-      for (const reaction of reactions) {
-        const postsSimilarToFavorite = await Reaction.findSimilarPosts(reaction._id.toString());
-        similarPosts = similarPosts.concat(postsSimilarToFavorite.filter((post) => !similarPosts.includes(post.toString())).map((post) => post.toString()));
+    if (favoritePosts) {
+      for (const favorite of favoritePosts) {
+        const reactions = (await Reaction.getByPost(favorite.likedItem)).slice(0, 5);
+        for (const reaction of reactions) {
+          const postsSimilarToFavorite = await Reaction.findSimilarPosts(reaction._id.toString());
+          if (postsSimilarToFavorite) {
+            similarPosts = similarPosts.concat(postsSimilarToFavorite.filter((post) => !similarPosts.includes(post.toString())).map((post) => post.toString()));
+          }
+        }
+      }
+    }
+    if (favoriteUsers) {
+      for (const user of favoriteUsers) {
+        const userPosts = await Post.getByAuthor(user.likedItem);
+        similarPosts = similarPosts.concat(userPosts.filter((post) => !similarPosts.includes(post._id.toString())).map((post) => post._id.toString()));
       }
     }
     return similarPosts;

@@ -28,7 +28,7 @@ async function register() {
         <input type="password" v-model.trim="password" id="aligned-password" placeholder="Password" required />
       </div>
       <div class="pure-controls">
-        <button type="submit" class="pure-button pure-button-primary">Register</button>
+        <button type="submit" class="pure-button brown-btn">Register</button>
       </div>
     </fieldset>
   </form>
@@ -38,5 +38,10 @@ async function register() {
 h3 {
   display: flex;
   justify-content: center;
+}
+
+.brown-btn {
+  background-color: #886750;
+  color: white;
 }
 </style>

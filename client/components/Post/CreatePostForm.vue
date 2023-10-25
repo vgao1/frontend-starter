@@ -1,30 +1,50 @@
 <script setup lang="ts">
+import axios from "axios";
 import { ref } from "vue";
 import { BodyT, fetchy } from "../../utils/fetchy";
 
 const photoURL = ref("");
 const zipCode = ref("");
 const address = ref("");
+let centerData = ref(Array<number>());
+let loading = ref(true);
 const emit = defineEmits(["refreshPosts"]);
 
 const createPost = async (photoURL: string, zipCode: string, address: string) => {
   let options: BodyT;
   if (address !== "") {
-    options = { address };
+    const center = await getCenter(address, zipCode);
+    if (center.length === 2) {
+      options = { address, latitude: center[1], longitude: center[0] };
+      try {
+        await fetchy("/api/posts", "POST", {
+          body: { photoURL, zipCode, options },
+        });
+      } catch (_) {
+        return;
+      }
+    } else {
+      throw new TypeError("Invalid Address not added to post!");
+    }
   } else {
     options = null;
-  }
-  try {
-    await fetchy("/api/posts", "POST", {
-      body: { photoURL, zipCode, options },
-    });
-  } catch (_) {
-    return;
   }
   emit("refreshPosts");
   emptyForm();
 };
 
+async function getCenter(address: string, zipCode: string) {
+  try {
+    const response = await axios.get(`https://api.mapbox.com/geocoding/v5/mapbox.places/${address},${zipCode},United States.json?limit=1&access_token=${import.meta.env.VITE_MAPBOX_TOKEN}`);
+    loading.value = false;
+    centerData.value = response.data.features[0].center;
+    return centerData.value;
+  } catch (err) {
+    loading.value = false;
+    centerData.value = [];
+    return [];
+  }
+}
 const emptyForm = () => {
   photoURL.value = "";
   zipCode.value = "";
@@ -40,7 +60,7 @@ const emptyForm = () => {
     <textarea id="zipCode" v-model="zipCode" placeholder="<digit><digit><digit><digit><digit>" required> </textarea>
     <label for="address">Address:</label>
     <textarea id="address" v-model="address" placeholder="... Ave/Blvd/Ln/Dr/Rd/St"> </textarea>
-    <button type="submit" class="pure-button-primary pure-button">Create Post</button>
+    <button type="submit" class="pure-button brown-btn">Create Post</button>
   </form>
 </template>
 
@@ -57,9 +77,18 @@ form {
 textarea {
   font-family: inherit;
   font-size: inherit;
-  height: 6em;
+  height: 1em;
   padding: 0.5em;
   border-radius: 4px;
   resize: none;
+}
+
+#photoURL {
+  height: 2em;
+}
+
+.brown-btn {
+  background-color: #886750;
+  color: white;
 }
 </style>

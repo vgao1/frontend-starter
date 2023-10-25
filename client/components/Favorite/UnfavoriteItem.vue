@@ -7,13 +7,13 @@ const emit = defineEmits(["refreshFavorites"]);
 const unfavorite = async () => {
   try {
     await fetchy(`/api/favorites/${props.favoriteItem}`, "DELETE");
-    emit("refreshFavorites");
   } catch {
     return;
   }
+  emit("refreshFavorites");
 };
 
-const buttonColor = props.itemType === "post" ? "#0000ff" : "white";
+const buttonColor = props.itemType === "post" ? "#886750" : "white";
 const textColor = props.itemType === "post" ? "white" : "black";
 const buttonText = props.itemType === "post" ? "Unfavorite Post" : "Unfavorite User";
 </script>
@@ -26,6 +26,8 @@ const buttonText = props.itemType === "post" ? "Unfavorite Post" : "Unfavorite U
 
 <style scoped>
 .unfavorite-btn {
-  width: 200px;
+  width: fit-content;
+  padding: 0.5em;
+  border-radius: 5px;
 }
 </style>

@@ -12,7 +12,7 @@ export default class FavoriteConcept {
   public readonly favorites = new DocCollection<FavoriteDoc>("favorites");
   async favorite(liker: ObjectId, likedItem: ObjectId, itemType: string) {
     const existingFavorite = await this.getFavorites({ liker, likedItem, itemType });
-    if (existingFavorite.length > 0) {
+    if (existingFavorite && existingFavorite.length > 0) {
       throw new AlreadyFavoritedError();
     }
     const _id = await this.favorites.createOne({ liker, likedItem, itemType });
@@ -29,10 +29,14 @@ export default class FavoriteConcept {
     return { msg: "Successfully unfavorited all posts " + post_id };
   }
   async getFavorites(query: Filter<FavoriteDoc>) {
-    const favorites = await this.favorites.readMany(query, {
-      sort: { dateUpdated: -1 },
-    });
-    return favorites;
+    try {
+      const favorites = await this.favorites.readMany(query, {
+        sort: { dateUpdated: -1 },
+      });
+      return favorites;
+    } catch {
+      return;
+    }
   }
 
   async getByLiker(liker: ObjectId) {

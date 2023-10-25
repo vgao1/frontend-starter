@@ -4,6 +4,7 @@ import { useUserStore } from "@/stores/user";
 import { storeToRefs } from "pinia";
 import { computed, onBeforeMount } from "vue";
 import { RouterLink, RouterView, useRoute } from "vue-router";
+import "../node_modules/mapbox-gl/dist/mapbox-gl.css";
 
 const currentRoute = useRoute();
 const currentRouteName = computed(() => currentRoute.name);
@@ -27,12 +28,21 @@ onBeforeMount(async () => {
       <div class="title">
         <img src="@/assets/images/logo.svg" />
         <RouterLink :to="{ name: 'Home' }">
-          <h1>Social Media App</h1>
+          <h1>Via Carto</h1>
         </RouterLink>
       </div>
       <ul>
         <li>
           <RouterLink :to="{ name: 'Home' }" :class="{ underline: currentRouteName == 'Home' }"> Home </RouterLink>
+        </li>
+        <li v-if="isLoggedIn">
+          <a href="/map" :class="{ underline: currentRouteName == 'Map' }"> Map </a>
+        </li>
+        <li v-if="isLoggedIn">
+          <a href="/searchArtist" :class="{ underline: currentRouteName == 'Artist' }"> Artist </a>
+        </li>
+        <li v-if="isLoggedIn">
+          <RouterLink :to="{ name: 'Create Post' }" :class="{ underline: currentRouteName == 'Create Post' }"> Create Post </RouterLink>
         </li>
         <li v-if="isLoggedIn">
           <RouterLink :to="{ name: 'Favorites' }" :class="{ underline: currentRouteName == 'Favorites' }"> Favorites </RouterLink>
@@ -94,5 +104,10 @@ ul {
 
 .underline {
   text-decoration: underline;
+}
+
+li a:hover {
+  background-color: black;
+  color: white;
 }
 </style>

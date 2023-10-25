@@ -37,7 +37,7 @@ const editPost = async (photoURL: string, zipCode: string, address: string) => {
     <textarea id="address" v-model="address" placeholder="... Ave/Blvd/Ln/Dr/Rd/St"> </textarea>
     <div class="base">
       <menu>
-        <li><button class="btn-small pure-button-primary pure-button" type="submit">Save</button></li>
+        <li><button class="btn-small pure-button" type="submit">Save</button></li>
         <li><button class="btn-small pure-button" @click="emit('editPost')">Cancel</button></li>
       </menu>
       <p v-if="props.post.dateCreated !== props.post.dateUpdated" class="timestamp">Edited on: {{ formatDate(props.post.dateUpdated) }}</p>

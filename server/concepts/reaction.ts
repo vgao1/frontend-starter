@@ -14,28 +14,30 @@ export interface ReactionDoc extends BaseDoc {
 export default class ReactionConcept {
   public readonly reactions = new DocCollection<ReactionDoc>("reactions");
   async postReaction(content: string, post: ObjectId, reacter: ObjectId, reactionType: string) {
+    if (reactionType === "tag") {
+      try {
+        const existingReaction = await this.getReactions({ post: new ObjectId(post), content, reactionType: "tag" });
+        if (existingReaction.length > 0) {
+          throw new NotAllowedError('Tag "' + content + '" already exists for this post! Please upvote tag instead.');
+        }
+      } catch {
+        /* empty */
+      }
+    }
     const voters = Array<string>();
     voters.push(reacter.toString());
     const _id = await this.reactions.createOne({ content, post, reacter, voters, reactionType, numVotes: 0 });
     return { msg: "Reaction successfully posted!", reaction: await this.reactions.readOne({ _id }) };
   }
 
-  async deleteReaction(reaction_id: string) {
-    await this.reactions.deleteOne({ _id: new ObjectId(reaction_id) });
+  async deleteReaction(_id: ObjectId) {
+    await this.reactions.deleteOne({ _id: new ObjectId(_id) });
     return { msg: "Reaction deleted successfully!" };
   }
 
   async deleteAllReactions(_id: ObjectId) {
     await this.reactions.deleteMany({ post: _id });
     return { msg: "Successfully deleted all reactions of deleted post!" };
-  }
-
-  async getReactionType(id: string) {
-    const reaction = await this.reactions.readOne({ _id: new ObjectId(id) });
-    if (!reaction) {
-      throw new ReactionNotFoundError();
-    }
-    return reaction.reactionType;
   }
 
   async getVoters(id: string) {
@@ -50,45 +52,39 @@ export default class ReactionConcept {
     const reaction = await this.reactions.readOne({ _id: new ObjectId(id) });
     if (!reaction) {
       throw new ReactionNotFoundError();
-    } else if (reaction.reactionType !== "tag") {
-      throw new NotATagError("used to find similar posts");
-    } else {
+    } else if (reaction.reactionType === "tag") {
       const tag = reaction.content;
       const query: Filter<ReactionDoc> = {
         content: tag,
         reactionType: "tag",
       };
-      const posts = await this.reactions.readMany(query);
+      const posts = await this.reactions.readMany(query, {
+        sort: { dateUpdated: -1 },
+      });
       return posts.map((post) => post.post);
     }
   }
 
   async upvote(user: ObjectId, reaction_id: string) {
-    const reactionType = await this.getReactionType(reaction_id);
-    if (reactionType !== "tag") {
-      throw new NotATagError("upvoted");
+    const existingVoters = await this.getVoters(reaction_id);
+    const userIdString = user.toString();
+    if (existingVoters.includes(userIdString)) {
+      throw new AlreadyUpvotedError();
     } else {
-      const existingVoters = await this.getVoters(reaction_id);
-      const userIdString = user.toString();
-      if (existingVoters.includes(userIdString)) {
-        throw new AlreadyUpvotedError(reaction_id);
-      } else {
-        const _id = new ObjectId(reaction_id);
-        existingVoters.push(userIdString);
-        await this.reactions.updateOne({ _id }, { voters: existingVoters, numVotes: existingVoters.length });
-        return { msg: "Reaction successfully upvoted!" };
-      }
+      const _id = new ObjectId(reaction_id);
+      existingVoters.push(userIdString);
+      await this.reactions.updateOne({ _id }, { voters: existingVoters, numVotes: existingVoters.length });
+      return { msg: "Reaction successfully upvoted!" };
     }
   }
 
-  async isReacter(user: ObjectId, reaction_id: string) {
-    const _id = new ObjectId(reaction_id);
+  async isReacter(user: ObjectId, _id: ObjectId) {
     const reaction = await this.reactions.readOne({ _id });
     if (!reaction) {
       throw new ReactionNotFoundError();
     }
     if (reaction.reacter.toString() !== user.toString()) {
-      throw new ReacterNotMatchError(_id);
+      throw new ReacterNotMatchError();
     }
   }
 
@@ -96,17 +92,25 @@ export default class ReactionConcept {
     const reactions = await this.reactions.readMany(query, {
       sort: { numVotes: -1, dateUpdated: -1 },
     });
+    if (reactions.length == 0) {
+      throw new ReactionNotFoundError();
+    }
     return reactions;
   }
 
   async getByPost(post: ObjectId) {
-    return await this.getReactions({ post });
+    try {
+      const postReactions = await this.getReactions({ post });
+      return postReactions;
+    } catch {
+      return [];
+    }
   }
 }
 
 export class ReacterNotMatchError extends NotAllowedError {
-  constructor(public readonly _id: ObjectId) {
-    super("You do not have a reaction with id {0}!", _id);
+  constructor() {
+    super("Reaction not found!");
   }
 }
 
@@ -116,20 +120,8 @@ export class ReactionNotFoundError extends NotFoundError {
   }
 }
 
-export class CantDeleteReactionError extends NotAllowedError {
-  constructor() {
-    super("Reaction isn't a comment, so it can't be deleted!");
-  }
-}
-
-export class NotATagError extends NotAllowedError {
-  constructor(public readonly prohibitedAction: string) {
-    super("Reaction isn't a tag, so it can't be {0}!", prohibitedAction);
-  }
-}
-
 export class AlreadyUpvotedError extends NotAllowedError {
-  constructor(public readonly reaction_id: string) {
-    super("Already upvoted reaction {0}!", reaction_id);
+  constructor() {
+    super("Already upvoted this reaction!");
   }
 }

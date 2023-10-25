@@ -5,6 +5,8 @@ import { NotAllowedError, NotFoundError } from "./errors";
 
 export interface PostOptions {
   address?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface PostDoc extends BaseDoc {
@@ -26,12 +28,19 @@ export default class PostConcept {
     const posts = await this.posts.readMany(query, {
       sort: { dateUpdated: -1 },
     });
+    if (posts.length == 0) {
+      throw new NotFoundError("No posts found!");
+    }
     return posts;
   }
 
   async getPost(_id: ObjectId) {
     const post = await this.posts.readOne({ _id });
-    return post;
+    if (post) {
+      return post;
+    } else {
+      throw new NotFoundError("Post not found!");
+    }
   }
 
   async getByAuthor(author: ObjectId) {
@@ -56,15 +65,6 @@ export default class PostConcept {
     }
     if (post.author.toString() !== user.toString()) {
       throw new PostAuthorNotMatchError(user, _id);
-    }
-  }
-
-  async getPostById(_id: ObjectId) {
-    const post = await this.posts.readOne({ _id });
-    if (!post) {
-      throw new NotFoundError(`Post ${_id} does not exist!`);
-    } else {
-      return post;
     }
   }
 

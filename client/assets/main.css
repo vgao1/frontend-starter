@@ -15,8 +15,8 @@ button.button-error {
 }
 
 a.button {
-  color: #212529;
-  background-color: #f1f3f5;
+  color: white;
+  background-color: #886750;
   border: 1px solid #dee2e6;
   border-radius: 0.25em;
   padding: 0.375em 0.75em;
@@ -29,4 +29,27 @@ a.button {
   justify-content: center;
   align-items: center;
   gap: 1em;
+}
+
+@font-face {
+  font-family: "HappyChicken";
+  src: url('./HappyChicken.otf');
+}
+
+@font-face {
+  font-family: "Stanberry";
+  src: url('./Stanberry.ttf');
+}
+
+h1, h2, h3 {
+  font-family: "HappyChicken";
+}
+
+a, p {
+  font-family: "Stanberry";
+}
+
+.brown-btn {
+  background-color: #886750;
+  color: white;
 }

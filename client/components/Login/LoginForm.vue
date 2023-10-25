@@ -27,7 +27,7 @@ async function login() {
         <input type="password" v-model.trim="password" id="aligned-password" placeholder="Password" required />
       </div>
       <div class="pure-controls">
-        <button type="submit" class="pure-button pure-button-primary">Submit</button>
+        <button type="submit" class="pure-button brown-btn">Submit</button>
       </div>
     </fieldset>
   </form>
@@ -37,5 +37,10 @@ async function login() {
 h3 {
   display: flex;
   justify-content: center;
+}
+
+.brown-btn {
+  background-color: #886750;
+  color: white;
 }
 </style>

@@ -7,6 +7,10 @@ import LoginView from "../views/LoginView.vue";
 import NotFoundView from "../views/NotFoundView.vue";
 import SettingView from "../views/SettingView.vue";
 import FavoritesView from "../views/FavoritesView.vue";
+import CreatePostView from "../views/CreatePostView.vue";
+import ArtistView from "../views/ArtistView.vue";
+import SimilarPostView from "../views/SimilarPostView.vue";
+import MapView from "../views/MapView.vue";
 
 const router = createRouter({
   history: createWebHistory(),
@@ -17,9 +21,35 @@ const router = createRouter({
       component: HomeView,
     },
     {
+      path: "/map/:zipCode?",
+      name: "Map",
+      component: MapView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/searchArtist/:username?",
+      name: "Artist",
+      component: ArtistView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/createPost",
+      name: "Create Post",
+      component: CreatePostView,
+      meta: { requiresAuth: true },
+    },
+    {
       path: "/favorite",
       name: "Favorites",
       component: FavoritesView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: "/tags/:tagID/similarPosts/:tagContent",
+      name: "Similar Post",
+      component: SimilarPostView,
+      props: true,
+      meta: { requiresAuth: true },
     },
     {
       path: "/setting",

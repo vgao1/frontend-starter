@@ -16,25 +16,27 @@ const favoriteItem = async () => {
     await fetchy(`/api/favorites`, "POST", {
       body: { item: itemId.value, itemType: props.itemType },
     });
-    emit("refreshFavorites");
   } catch (_) {
     return;
   }
+  emit("refreshFavorites");
 };
 
-const buttonColor = props.itemType === "post" ? "#0000ff" : "white";
+const buttonColor = props.itemType === "post" ? "#886750" : "white";
 const textColor = props.itemType === "post" ? "white" : "black";
 const buttonText = props.itemType === "post" ? "Favorite Post" : "Favorite User";
 </script>
 
 <template>
   <form @submit.prevent="favoriteItem()">
-    <button type="submit" class="pure-button favorite-btn" :style="{ 'background-color': buttonColor, color: textColor }">{{ buttonText }}</button>
+    <button type="submit" class="pure-button brown-btn favorite-btn" :style="{ 'background-color': buttonColor, color: textColor }">{{ buttonText }}</button>
   </form>
 </template>
 
 <style scoped>
 .favorite-btn {
-  width: 200px;
+  width: fit-content;
+  padding: 0.5em;
+  border-radius: 5px;
 }
 </style>
