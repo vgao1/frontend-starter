@@ -10,7 +10,9 @@ let loaded = ref(false);
 
 async function getCenter() {
   try {
-    const response = await axios.get(`https://api.mapbox.com/geocoding/v5/mapbox.places/${props.zipCode},United States.json?limit=1&access_token=${import.meta.env.VITE_MAPBOX_TOKEN}`);
+    const response = await axios.get(
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/${props.zipCode},United States.json?limit=1&access_token=pk.eyJ1IjoidmdhbyIsImEiOiJjbG8yM2VxYTcxZ3B2MmtwZG51OWphdHVvIn0.FyQStQzF5XW9Ii-w6qiIgA`,
+    );
     loading.value = false;
     centerData.value = response.data.features[0].center;
     return centerData.value;
