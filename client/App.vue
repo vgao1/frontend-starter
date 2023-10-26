@@ -33,25 +33,25 @@ onBeforeMount(async () => {
       </div>
       <ul>
         <li>
-          <RouterLink :to="{ name: 'Home' }" :class="{ underline: currentRouteName == 'Home' }"> Home </RouterLink>
+          <RouterLink :to="{ name: 'Home' }" :class="{ underline: currentRouteName == 'Home' }"> <button>Home</button></RouterLink>
         </li>
         <li v-if="isLoggedIn">
-          <a href="/map" :class="{ underline: currentRouteName == 'Map' }"> Map </a>
+          <a href="/map" :class="{ underline: currentRouteName == 'Map' }"><button>Map</button></a>
         </li>
         <li v-if="isLoggedIn">
-          <a href="/searchArtist" :class="{ underline: currentRouteName == 'Artist' }"> Artist </a>
+          <a href="/searchArtist" :class="{ underline: currentRouteName == 'Artist' }"><button>Artist</button></a>
         </li>
         <li v-if="isLoggedIn">
-          <RouterLink :to="{ name: 'Create Post' }" :class="{ underline: currentRouteName == 'Create Post' }"> Create Post </RouterLink>
+          <RouterLink :to="{ name: 'Create Post' }" :class="{ underline: currentRouteName == 'Create Post' }"><button>Create Post</button></RouterLink>
         </li>
         <li v-if="isLoggedIn">
-          <RouterLink :to="{ name: 'Favorites' }" :class="{ underline: currentRouteName == 'Favorites' }"> Favorites </RouterLink>
+          <RouterLink :to="{ name: 'Favorites' }" :class="{ underline: currentRouteName == 'Favorites' }"><button>Favorites</button></RouterLink>
         </li>
         <li v-if="isLoggedIn">
-          <RouterLink :to="{ name: 'Settings' }" :class="{ underline: currentRouteName == 'Settings' }"> Settings </RouterLink>
+          <RouterLink :to="{ name: 'Settings' }" :class="{ underline: currentRouteName == 'Settings' }"><button>Settings</button></RouterLink>
         </li>
         <li v-else>
-          <RouterLink :to="{ name: 'Login' }" :class="{ underline: currentRouteName == 'Login' }"> Login </RouterLink>
+          <RouterLink :to="{ name: 'Login' }" :class="{ underline: currentRouteName == 'Login' }"><button>Login</button></RouterLink>
         </li>
       </ul>
     </nav>
@@ -66,7 +66,7 @@ onBeforeMount(async () => {
 @import "./assets/toast.css";
 
 nav {
-  padding: 1em 2em;
+  padding-left: 1em;
   background-color: lightgray;
   display: flex;
   align-items: center;
@@ -89,8 +89,8 @@ img {
 
 a {
   font-size: large;
-  color: black;
   text-decoration: none;
+  color: black;
 }
 
 ul {
@@ -99,15 +99,23 @@ ul {
   display: flex;
   align-items: center;
   flex-direction: row;
-  gap: 1em;
+  margin-block-start: 0px;
+  margin-block-end: 0px;
 }
 
 .underline {
   text-decoration: underline;
 }
 
-li a:hover {
-  background-color: black;
+button {
+  border: none;
+  background-color: lightgray;
+  cursor: pointer;
+  padding: 1em;
+}
+
+button:hover {
   color: white;
+  background-color: #886750;
 }
 </style>
